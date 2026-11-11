@@ -46,11 +46,13 @@ public class IncidentController {
 
 
 
+
     @GetMapping("/paged")
     public Page<IncidentResponse> findAllPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) IncidentStatus status) {
+            @RequestParam(required = false) IncidentStatus status,
+            @RequestParam(required = false) String keyword) {
 
         if (page < 0 || size < 1 || size > 100) {
             throw new ResponseStatusException(
@@ -59,8 +61,14 @@ public class IncidentController {
             );
         }
 
-        return incidentService.findAllPaged(page, size, status);
+        return incidentService.findAllPaged(
+                page,
+                size,
+                status,
+                keyword
+        );
     }
+
 
 
 

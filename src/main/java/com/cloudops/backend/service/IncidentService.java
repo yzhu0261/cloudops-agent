@@ -110,10 +110,12 @@ public class IncidentService {
 
 
 
+
     public Page<IncidentResponse> findAllPaged(
             int page,
             int size,
-            IncidentStatus status) {
+            IncidentStatus status,
+            String keyword) {
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -121,20 +123,18 @@ public class IncidentService {
                 Sort.by("createdAt").descending()
         );
 
-        Page<IncidentEntity> result;
+        String statusValue =
+                status == null ? null : status.name();
 
-        if (status == null) {
-            result = incidentRepository.findAll(pageable);
-        } else {
-            result = incidentRepository.findByStatus(
-                    status.name(),
-                    pageable
-            );
-        }
+        String normalizedKeyword =
+                keyword == null || keyword.isBlank()
+                        ? null
+                        : keyword.trim();
 
-        return result.map(this::toResponse);
+        return incidentRepository.searchIncidents(
+                statusValue,
+                normalizedKeyword,
+                pageable
+        ).map(this::toResponse);
     }
-
-
-
 }
