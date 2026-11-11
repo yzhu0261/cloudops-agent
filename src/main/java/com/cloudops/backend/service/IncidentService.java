@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.Instant;
 import java.util.List;
@@ -103,5 +107,34 @@ public class IncidentService {
 
         return toResponse(entity);
     }
+
+
+
+    public Page<IncidentResponse> findAllPaged(
+            int page,
+            int size,
+            IncidentStatus status) {
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        Page<IncidentEntity> result;
+
+        if (status == null) {
+            result = incidentRepository.findAll(pageable);
+        } else {
+            result = incidentRepository.findByStatus(
+                    status.name(),
+                    pageable
+            );
+        }
+
+        return result.map(this::toResponse);
+    }
+
+
 
 }
