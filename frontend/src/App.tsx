@@ -1,42 +1,78 @@
 
-import './App.css';
+import { useEffect, useState } from 'react'
+import './App.css'
 
-type MetricCardProps = {
-  title: string;
-  value: number;
-  color: string;
-};
-
-function MetricCard({ title, value, color }: MetricCardProps) {
-  return (
-      <div className="metric-card">
-        <h3>{title}</h3>
-        <h2 style={{ color }}>{value.toFixed(2)}%</h2>
-      </div>
-  );
+type SystemMetric = {
+    id: string
+    cpuUsage: number
+    memoryUsage: number
+    collectedAt: string
 }
 
 function App() {
-  return (
-      <div className="dashboard">
-        <h1>CloudOps Agent</h1>
-        <p>Infrastructure Monitoring Dashboard</p>
+    const [metrics, setMetrics] = useState<SystemMetric[]>([])
+    const [error, setError] = useState<string | null>(null)
 
-        <div className="metrics-grid">
-          <MetricCard
-              title="CPU Usage"
-              value={24.6}
-              color="#60a5fa"
-          />
+    useEffect(() => {
+        let active = true
 
-          <MetricCard
-              title="Memory Usage"
-              value={67.8}
-              color="#a78bfa"
-          />
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/api/metrics?limit=1')
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch metrics')
+                }
+
+                const data: SystemMetric[] = await response.json()
+
+                if (active) {
+                    setMetrics(data)
+                    setError(null)
+                }
+            } catch {
+                if (active) {
+                    setError('Failed to connect to backend')
+                }
+            }
+        }
+
+        loadMetrics()
+
+        const timer = setInterval(loadMetrics, 10000)
+
+        return () => {
+            active = false
+            clearInterval(timer)
+        }
+    }, [])
+
+    const latest = metrics[0]
+
+    return (
+        <div className="dashboard">
+            <h1>CloudOps Agent</h1>
+            <p>Infrastructure Monitoring Dashboard</p>
+
+            {error && <p>{error}</p>}
+
+            {latest ? (
+                <div className="metrics-grid">
+                    <div className="metric-card">
+                        <h3>CPU Usage</h3>
+                        <h2>{latest.cpuUsage.toFixed(2)}%</h2>
+                    </div>
+
+                    <div className="metric-card">
+                        <h3>Memory Usage</h3>
+                        <h2>{latest.memoryUsage.toFixed(2)}%</h2>
+                    </div>
+                </div>
+            ) : (
+                <p>Waiting for monitoring data...</p>
+            )}
         </div>
-      </div>
-  );
+    )
 }
 
-export default App;
+export default App
