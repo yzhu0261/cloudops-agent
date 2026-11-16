@@ -1,0 +1,25 @@
+# IDE and editor metadata
+.idea/
+*.iml
+.vscode/
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output and dependencies
+**/target/
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# Logs and operating-system files
+*.log
+logs/
+.DS_Store
+Thumbs.db

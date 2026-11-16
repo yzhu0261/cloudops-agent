@@ -1,127 +1,69 @@
 
-import { useEffect, useState } from 'react'
 import './App.css'
 
-type SystemMetric = {
-    id: string
-    cpuUsage: number
-    memoryUsage: number
-    collectedAt: string
-}
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-} from 'recharts'
-
 function App() {
-    const [metrics, setMetrics] = useState<SystemMetric[]>([])
-    const [error, setError] = useState<string | null>(null)
+  const services = [
+    {
+      name: 'AWS Lambda',
+      detail: 'Invocations, errors, duration and throttles',
+    },
+    {
+      name: 'Amazon API Gateway',
+      detail: '4XX/5XX responses and integration latency',
+    },
+    {
+      name: 'Amazon DynamoDB',
+      detail: 'Request throttling and capacity signals',
+    },
+  ]
 
-    useEffect(() => {
-        let active = true
+  return (
+    <main className="dashboard">
+      <header className="hero">
+        <div>
+          <p className="eyebrow">FITCLOUD OPERATIONS</p>
+          <h1>CloudOps Agent</h1>
+          <p className="hero-copy">
+            AWS monitoring foundation for FitCloud's serverless backend.
+          </p>
+        </div>
+        <span className="status-badge">CloudWatch connection pending</span>
+      </header>
 
-        async function loadMetrics() {
-            try {
-                const response = await fetch('/api/metrics?limit=30')
+      <section className="notice" aria-labelledby="telemetry-status">
+        <div className="notice-icon" aria-hidden="true">i</div>
+        <div>
+          <h2 id="telemetry-status">No live telemetry connected</h2>
+          <p>
+            This dashboard intentionally shows no simulated metrics. Live values
+            will appear after read-only AWS CloudWatch access and resource scope
+            are configured.
+          </p>
+        </div>
+      </section>
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch metrics')
-                }
-
-                const data: SystemMetric[] = await response.json()
-
-                if (active) {
-                    setMetrics(data)
-                    setError(null)
-                }
-            } catch {
-                if (active) {
-                    setError('Failed to connect to backend')
-                }
-            }
-        }
-
-        loadMetrics()
-
-        const timer = setInterval(loadMetrics, 10000)
-
-        return () => {
-            active = false
-            clearInterval(timer)
-        }
-    }, [])
-
-    const latest = metrics[0]
-    const chartData = [...metrics].reverse()
-
-    return (
-        <div className="dashboard">
-            <h1>CloudOps Agent</h1>
-            <p>Infrastructure Monitoring Dashboard</p>
-
-            {error && <p>{error}</p>}
-
-            {latest ? (
-                <div className="metrics-grid">
-                    <div className="metric-card">
-                        <h3>CPU Usage</h3>
-                        <h2>{latest.cpuUsage.toFixed(2)}%</h2>
-                    </div>
-
-                    <div className="metric-card">
-                        <h3>Memory Usage</h3>
-                        <h2>{latest.memoryUsage.toFixed(2)}%</h2>
-                    </div>
-                </div>
-
-
-            ) : (
-                <p>Waiting for monitoring data...</p>
-            )}
-
-            <div className="chart-card">
-                <h3>System Resource Usage</h3>
-
-                <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-
-                        <XAxis dataKey="collectedAt" />
-
-                        <YAxis domain={[0, 100]} />
-
-                        <Tooltip />
-
-                        <Legend />
-
-                        <Line
-                            type="monotone"
-                            dataKey="cpuUsage"
-                            stroke="#2563eb"
-                            name="CPU Usage"
-                            dot={false}
-                        />
-
-                        <Line
-                            type="monotone"
-                            dataKey="memoryUsage"
-                            stroke="#16a34a"
-                            name="Memory Usage"
-                            dot={false}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
+      <section className="scope" aria-labelledby="monitoring-scope">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">PLANNED SIGNALS</p>
+            <h2 id="monitoring-scope">Monitoring scope</h2>
+          </div>
+          <p>Data source: Amazon CloudWatch</p>
         </div>
 
-
-    )
+        <div className="service-grid">
+          {services.map((service) => (
+            <article className="service-card" key={service.name}>
+              <span className="service-dot" aria-hidden="true" />
+              <h3>{service.name}</h3>
+              <p>{service.detail}</p>
+              <span className="not-configured">Not configured</span>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+  )
 }
 
 export default App
