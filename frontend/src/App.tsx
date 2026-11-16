@@ -8,6 +8,16 @@ type SystemMetric = {
     memoryUsage: number
     collectedAt: string
 }
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from 'recharts'
 
 function App() {
     const [metrics, setMetrics] = useState<SystemMetric[]>([])
@@ -18,7 +28,7 @@ function App() {
 
         async function loadMetrics() {
             try {
-                const response = await fetch('/api/metrics?limit=1')
+                const response = await fetch('/api/metrics?limit=30')
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch metrics')
@@ -48,6 +58,7 @@ function App() {
     }, [])
 
     const latest = metrics[0]
+    const chartData = [...metrics].reverse()
 
     return (
         <div className="dashboard">
@@ -68,10 +79,48 @@ function App() {
                         <h2>{latest.memoryUsage.toFixed(2)}%</h2>
                     </div>
                 </div>
+
+
             ) : (
                 <p>Waiting for monitoring data...</p>
             )}
+
+            <div className="chart-card">
+                <h3>System Resource Usage</h3>
+
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+
+                        <XAxis dataKey="collectedAt" />
+
+                        <YAxis domain={[0, 100]} />
+
+                        <Tooltip />
+
+                        <Legend />
+
+                        <Line
+                            type="monotone"
+                            dataKey="cpuUsage"
+                            stroke="#2563eb"
+                            name="CPU Usage"
+                            dot={false}
+                        />
+
+                        <Line
+                            type="monotone"
+                            dataKey="memoryUsage"
+                            stroke="#16a34a"
+                            name="Memory Usage"
+                            dot={false}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
         </div>
+
+
     )
 }
 
