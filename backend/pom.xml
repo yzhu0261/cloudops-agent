@@ -21,6 +21,7 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<aws.sdk.version>2.42.0</aws.sdk.version>
 	</properties>
 
 	<dependencies>
@@ -56,6 +57,20 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
+		</dependency>
+
+		<!-- AWS SDK for Java v2: CloudWatch -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>cloudwatch</artifactId>
+			<version>${aws.sdk.version}</version>
+		</dependency>
+
+		<!-- AWS SDK: IAM Login Session Support -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>signin</artifactId>
+			<version>${aws.sdk.version}</version>
 		</dependency>
 
 		<!-- General Testing: JUnit 5, Mockito -->
