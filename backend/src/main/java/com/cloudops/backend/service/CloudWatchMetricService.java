@@ -10,9 +10,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CloudWatchMetricService {
+
+    private static final Set<String> SUPPORTED_METRICS =
+            Set.of("Invocations", "Errors", "Duration");
 
     private final CloudWatchClient cloudWatchClient;
 
@@ -21,14 +25,31 @@ public class CloudWatchMetricService {
     }
 
     public List<CloudWatchMetricResponse> getInvocations(String functionName) {
+        return getMetrics(functionName, "Invocations");
+    }
+
+    public List<CloudWatchMetricResponse> getMetrics(
+            String functionName,
+            String metricName
+    ) {
+
+        if (!SUPPORTED_METRICS.contains(metricName)) {
+            throw new IllegalArgumentException(
+                    "Unsupported metric: " + metricName
+            );
+        }
 
         Instant endTime = Instant.now();
         Instant startTime = endTime.minus(24, ChronoUnit.HOURS);
 
+        Statistic statistic = metricName.equals("Duration")
+                ? Statistic.AVERAGE
+                : Statistic.SUM;
+
         GetMetricStatisticsRequest request =
                 GetMetricStatisticsRequest.builder()
                         .namespace("AWS/Lambda")
-                        .metricName("Invocations")
+                        .metricName(metricName)
                         .dimensions(
                                 Dimension.builder()
                                         .name("FunctionName")
@@ -38,7 +59,7 @@ public class CloudWatchMetricService {
                         .startTime(startTime)
                         .endTime(endTime)
                         .period(3600)
-                        .statistics(Statistic.SUM)
+                        .statistics(statistic)
                         .build();
 
         GetMetricStatisticsResponse response =
@@ -48,7 +69,9 @@ public class CloudWatchMetricService {
                 .stream()
                 .map(datapoint -> new CloudWatchMetricResponse(
                         datapoint.timestamp(),
-                        datapoint.sum(),
+                        metricName.equals("Duration")
+                                ? datapoint.average()
+                                : datapoint.sum(),
                         datapoint.unitAsString()
                 ))
                 .sorted(Comparator.comparing(
