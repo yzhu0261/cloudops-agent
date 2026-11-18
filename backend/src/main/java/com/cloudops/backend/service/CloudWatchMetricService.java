@@ -2,6 +2,9 @@
 package com.cloudops.backend.service;
 
 import com.cloudops.backend.dto.CloudWatchMetricResponse;
+import com.cloudops.backend.monitoring.LambdaWindowMetrics;
+import com.cloudops.backend.monitoring.MetricWindow;
+
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.*;
@@ -78,5 +81,42 @@ public class CloudWatchMetricService {
                         CloudWatchMetricResponse::timestamp
                 ))
                 .toList();
+    }
+
+    public LambdaWindowMetrics fetchWindow(String functionName, MetricWindow window) {
+        Double invocations = querySingle(functionName, "Invocations", Statistic.SUM, window);
+        Double errors = querySingle(functionName, "Errors", Statistic.SUM, window);
+        Double duration = querySingle(functionName, "Duration", Statistic.AVERAGE, window);
+        return new LambdaWindowMetrics(invocations, errors, duration);
+    }
+
+    private Double querySingle(
+            String functionName,
+            String metricName,
+            Statistic statistic,
+            MetricWindow window
+    ) {
+        GetMetricStatisticsRequest request =
+                GetMetricStatisticsRequest.builder()
+                        .namespace("AWS/Lambda")
+                        .metricName(metricName)
+                        .dimensions(
+                                Dimension.builder()
+                                        .name("FunctionName")
+                                        .value(functionName)
+                                        .build()
+                        )
+                        .startTime(window.start())
+                        .endTime(window.end())
+                        .period(MetricWindow.PERIOD_SECONDS)
+                        .statistics(statistic)
+                        .build();
+
+        return cloudWatchClient.getMetricStatistics(request)
+                .datapoints()
+                .stream()
+                .findFirst()
+                .map(dp -> statistic == Statistic.AVERAGE ? dp.average() : dp.sum())
+                .orElse(null);
     }
 }
