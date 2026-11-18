@@ -1,157 +1,465 @@
 # CloudOps Agent
 
-**CloudOps Agent is an AI-powered backend operations platform designed to automatically detect, diagnose, and safely remediate backend failures.**
+**CloudOps Agent is an AI-powered autonomous cloud operations system designed to automatically detect anomalies, investigate failures, execute authorized remediation actions, and verify recovery.**
 
-The project combines Spring Boot, PostgreSQL, React, AWS CloudWatch, Machine Learning, Retrieval-Augmented Generation (RAG), and AI Agent capabilities.
+The project integrates Spring Boot, PostgreSQL, React, AWS CloudWatch, Machine Learning, Spring AI, AI Agents, and Retrieval-Augmented Generation (RAG).
 
-Its primary goal is to move beyond traditional monitoring dashboards by building an autonomous incident-response workflow:
+Its core objective is to build a closed-loop cloud operations workflow:
 
-**Monitoring → Anomaly Detection → AI Diagnosis → Remediation → Verification**
+**Automated Monitoring → ML Anomaly Detection → AI Agent Diagnosis → Safe Remediation → Post-Remediation Verification**
 
-The initial integration target is FitCloud, a serverless application deployed on AWS using Lambda, API Gateway, and DynamoDB.
+Unlike a traditional monitoring dashboard or conversational AI assistant, CloudOps Agent is designed to proactively identify and investigate operational issues without requiring users to manually initiate each investigation.
 
-## Project Objectives
+The initial integration target is **FitCloud**, an AWS serverless application using Lambda, API Gateway, and DynamoDB.
+
+> **Project Status:** Active development. Cloud monitoring data access, backend infrastructure, and foundational LLM integration are implemented. Autonomous detection, diagnosis orchestration, RAG, and remediation are under development.
+
+---
+
+## Project Goals
 
 CloudOps Agent aims to:
 
-- Automatically identify backend anomalies using operational metrics and machine learning.
-- Investigate potential root causes using logs, monitoring data, and historical incidents.
-- Use LLMs and RAG to generate evidence-based diagnoses.
-- Enable an AI Agent to select and execute predefined, authorized remediation actions.
-- Verify remediation outcomes and maintain an auditable incident history.
+- Continuously monitor backend services without requiring manual API requests.
+- Detect operational anomalies using machine learning and statistical analysis.
+- Automatically trigger AI Agent investigations when anomalies are detected.
+- Correlate metrics, application logs, and operational knowledge to identify likely root causes.
+- Use RAG to retrieve relevant incident histories, documentation, and remediation runbooks.
+- Select and execute predefined remediation actions under explicit safety policies.
+- Verify recovery using fresh operational evidence.
+- Record incident investigations, decisions, actions, and outcomes for auditing.
 
-Remediation will initially be tested in controlled environments with appropriate safeguards, permissions, and approval mechanisms.
+The long-term objective is a system that can progress from detecting an operational failure to verifying its resolution with minimal manual intervention, while maintaining appropriate human oversight.
 
-## Current Capabilities
+## System Architecture
 
-### Backend
+The planned autonomous operations workflow is:
 
-- Java 21 and Spring Boot REST API.
-- PostgreSQL-backed incident management.
-- Incident creation, lookup, pagination, filtering, and status transitions.
-- AWS SDK integration with Amazon CloudWatch.
-- Real CloudWatch metric retrieval for AWS Lambda.
-- Support for Lambda `Invocations`, `Errors`, and `Duration` metrics.
-- Configurable AWS authentication through the AWS SDK default credential provider chain.
-- Backend tests isolated from the development database.
+```text
+AWS Cloud Infrastructure
+(Lambda / API Gateway / DynamoDB)
+              |
+              v
+       Amazon CloudWatch
+        Metrics + Logs
+              |
+              v
+     Automated Monitoring
+     (Spring Boot Scheduler)
+              |
+              v
+    ML Anomaly Detection
+              |
+       Anomaly Detected?
+          /        \
+        No          Yes
+        |            |
+   Continue          v
+   Monitoring   AI Agent Investigation
+                     |
+              +------+------+
+              |             |
+              v             v
+        Monitoring      RAG Knowledge
+        Tools           Retrieval
+              |             |
+              +------+------+
+                     |
+                     v
+             Root Cause Analysis
+                     |
+                     v
+            Remediation Decision
+                     |
+              Safety / Approval
+                     |
+                     v
+             Authorized Action
+                     |
+                     v
+            Recovery Verification
+                     |
+                     v
+            Incident Audit Trail
+                     |
+                     v
+             Continue Monitoring
+```
 
-### Frontend
+The monitoring and anomaly detection components initiate the workflow automatically.
 
-- React and TypeScript application foundation.
-- Vite development environment.
-- Recharts dependency for future operational visualizations.
+The AI Agent is responsible for evidence gathering, diagnosis, and selecting permitted remediation tools. Execution remains subject to safety policies and approval requirements.
 
-### AWS Integration
+## Current Implementation
 
-The backend can query real operational metrics from AWS CloudWatch for FitCloud Lambda functions.
+### 1. Backend Infrastructure
 
-Example API:
+Implemented using Java 21 and Spring Boot.
+
+Current capabilities include:
+
+- REST API architecture.
+- PostgreSQL persistence through Spring Data JPA.
+- Incident creation, retrieval, pagination, filtering, and status management.
+- System metrics collection infrastructure.
+- AWS CloudWatch integration.
+- Backend tests designed to avoid modifying the development database.
+
+Incident management provides persistence and operational history. It is not intended to be the primary mechanism for initiating investigations.
+
+### 2. AWS CloudWatch Metrics
+
+The backend retrieves real operational metrics from AWS Lambda using the AWS SDK for Java.
+
+Currently supported metrics:
+
+| Metric | Statistic | Purpose |
+|---|---|---|
+| Invocations | Sum | Monitor Lambda invocation volume |
+| Errors | Sum | Identify execution failures |
+| Duration | Average | Monitor execution latency |
+
+Example endpoint:
 
 ```http
 GET /api/cloudwatch/metrics?functionName=SaveWorkout&metricName=Errors
 ```
 
-Supported metrics:
+Example response:
 
-| Metric | Statistic | Description |
-|---|---|---|
-| Invocations | Sum | Number of Lambda invocations |
-| Errors | Sum | Number of Lambda execution errors |
-| Duration | Average | Average Lambda execution duration |
+```json
+[
+  {
+    "timestamp": "2026-11-17T09:20:00Z",
+    "value": 0.0,
+    "unit": "Count"
+  }
+]
+```
 
-CloudWatch integration currently supports on-demand metric retrieval. Automated anomaly detection, AI diagnosis, and remediation are not yet implemented.
+The backend has successfully retrieved real CloudWatch metric data from the FitCloud `SaveWorkout` Lambda function.
 
-## Planned Core Architecture
+Current metric retrieval is request-driven. Continuous scheduled monitoring and automated anomaly detection are not yet implemented.
 
-### 1. Monitoring and Data Collection
+### 3. Spring AI and Local LLM Integration
 
-Collect operational signals from supported backend services, initially using Amazon CloudWatch.
+The backend integrates:
 
-### 2. Machine Learning Anomaly Detection
+- Spring AI `ChatClient`.
+- Ollama for local model inference.
+- Qwen3 4B as the current language model.
+- Java tools registered through Spring AI.
+- A natural-language investigation endpoint.
 
-Apply statistical methods and machine learning models to identify abnormal backend behavior, including elevated error rates and unusual execution latency.
+The current AI service is configured to use available monitoring tools, avoid fabricating CloudWatch data, and distinguish observations from hypotheses.
 
-### 3. AI-Powered Root Cause Analysis
+Example investigation endpoint:
 
-Use an LLM with tool access to investigate detected anomalies, inspect relevant metrics and logs, and generate evidence-based diagnoses.
+```http
+POST /api/agent/investigate
+Content-Type: application/json
+```
 
-### 4. Retrieval-Augmented Generation (RAG)
+Example request:
 
-Introduce embeddings and a vector database to retrieve relevant technical documentation, incident histories, and operational runbooks.
+```json
+{
+  "message": "Use the get_lambda_metrics tool to check the Errors metric of the SaveWorkout Lambda function."
+}
+```
 
-### 5. AI Agent and Automated Remediation
+The endpoint has successfully generated contextual responses about Lambda monitoring data.
 
-Build an agent capable of selecting predefined remediation tools based on diagnostic evidence.
+A CloudWatch metric retrieval tool has been registered with Spring AI. End-to-end verification of actual model-triggered tool execution remains a validation task.
 
-Execution will be restricted by explicit permissions, safety checks, and appropriate approval policies.
+**This endpoint is currently a development and debugging interface. It is not the intended primary trigger for production investigations.**
 
-### 6. Post-Remediation Verification
+In the target architecture, the anomaly detection engine will automatically initiate AI investigations.
 
-Re-evaluate operational metrics after remediation to determine whether the incident has been resolved.
+### 4. Frontend Foundation
 
-### 7. Operations Dashboard
+The frontend uses:
 
-Provide visibility into backend health, detected anomalies, AI diagnoses, remediation actions, and incident histories.
+- React.
+- TypeScript.
+- Vite.
+- Recharts for future visualizations.
 
-The dashboard supports the AI operations workflow rather than serving as the project's primary purpose.
+The frontend is currently a development foundation.
+
+Its intended purpose is to display operational health, anomalies, investigation results, remediation decisions, and verification outcomes.
+
+It is not intended to replace the autonomous backend workflow.
+
+## Core Development Modules
+
+### Module 1: Automated Monitoring
+
+**Status: Planned — Next Development Priority**
+
+Implement scheduled monitoring using Spring Boot.
+
+Responsibilities:
+
+- Periodically retrieve CloudWatch metrics.
+- Monitor configured Lambda functions.
+- Collect metrics within defined time windows.
+- Handle missing data and AWS API failures.
+- Store relevant monitoring observations.
+- Trigger anomaly evaluation automatically.
+
+The monitoring process must operate without user interaction.
+
+### Module 2: Machine Learning Anomaly Detection
+
+**Status: Planned**
+
+Develop an anomaly detection component using operational metrics.
+
+Potential techniques include:
+
+- Statistical baselines and moving averages.
+- Z-score-based detection.
+- Isolation Forest.
+- Other models selected based on available monitoring data.
+
+Target anomalies include:
+
+- Unexpected increases in error rates.
+- Abnormal execution latency.
+- Significant changes in invocation volume.
+- Repeated failures.
+- Unusual operational patterns.
+
+Initial rule-based checks may be used to validate the monitoring pipeline, but they will not be presented as machine learning.
+
+### Module 3: Autonomous AI Agent Investigation
+
+**Status: Foundational LLM integration implemented; autonomous orchestration planned**
+
+Automatically initiate investigations when anomalies are detected.
+
+The Agent will:
+
+1. Receive a structured anomaly event.
+2. Retrieve relevant CloudWatch metrics.
+3. Inspect application logs.
+4. Gather additional operational evidence.
+5. Retrieve relevant knowledge using RAG.
+6. Analyze potential root causes.
+7. Generate a structured diagnosis with supporting evidence.
+8. Recommend an appropriate response.
+
+The existing Spring AI integration and CloudWatch tools provide the initial foundation for this module.
+
+### Module 4: Retrieval-Augmented Generation (RAG)
+
+**Status: Planned**
+
+Implement a knowledge retrieval pipeline using embeddings and a vector database.
+
+Potential knowledge sources:
+
+- Historical incident reports.
+- Operational runbooks.
+- System architecture documentation.
+- Troubleshooting guides.
+- Previous remediation outcomes.
+
+The RAG pipeline will provide contextual evidence to improve diagnostic consistency and support remediation decisions.
+
+### Module 5: Safe Automated Remediation
+
+**Status: Planned**
+
+Provide predefined tools for authorized remediation actions.
+
+The Agent will not receive unrestricted infrastructure access.
+
+Remediation controls will include:
+
+- Tool allowlists.
+- Least-privilege AWS permissions.
+- Policy-based action restrictions.
+- Human approval for higher-risk operations.
+- Execution timeouts and safeguards.
+- Audit logging.
+- Prevention of repeated or conflicting actions.
+
+Development will begin with simulated remediation and controlled test environments.
+
+### Module 6: Post-Remediation Verification
+
+**Status: Planned**
+
+After a remediation action, CloudOps Agent will automatically collect fresh monitoring evidence.
+
+The verification component will:
+
+- Re-query relevant metrics.
+- Evaluate whether the anomaly persists.
+- Compare pre-remediation and post-remediation conditions.
+- Record the outcome.
+- Escalate unresolved incidents when appropriate.
+
+A remediation action will not be considered successful solely because an API call completed.
+
+### Module 7: Operations Dashboard
+
+**Status: Frontend foundation implemented; dashboard planned**
+
+The dashboard will provide visibility into:
+
+- Monitored services.
+- Current operational health.
+- Detected anomalies.
+- AI Agent investigations.
+- Root-cause findings.
+- Remediation recommendations and execution.
+- Recovery verification.
+- Historical incidents and audit records.
+
+The dashboard is an observability and oversight interface for the autonomous system.
 
 ## Technology Stack
 
-| Layer | Technologies |
-|---|---|
-| Backend | Java 21, Spring Boot, Spring Data JPA |
-| Frontend | React, TypeScript, Vite, Recharts |
-| Database | PostgreSQL |
-| Cloud Monitoring | AWS CloudWatch, AWS SDK for Java |
-| Anomaly Detection | Machine Learning (planned) |
-| AI Diagnosis | LLM and tool calling (planned) |
-| Knowledge Retrieval | RAG, embeddings, vector database (planned) |
-| Remediation | Controlled agent tools (planned) |
+| Component | Technology | Status |
+|---|---|---|
+| Backend | Java 21, Spring Boot | Implemented |
+| Persistence | PostgreSQL, Spring Data JPA | Implemented |
+| Frontend | React, TypeScript, Vite | Foundation implemented |
+| Visualization | Recharts | Dependency added |
+| Cloud Monitoring | AWS CloudWatch, AWS SDK for Java | Metric retrieval implemented |
+| AI Framework | Spring AI | Integrated |
+| LLM Runtime | Ollama | Integrated |
+| Language Model | Qwen3 4B | Integrated |
+| Automated Monitoring | Spring Boot Scheduling | Planned |
+| Anomaly Detection | Statistical methods, Machine Learning | Planned |
+| Knowledge Retrieval | RAG, embeddings, vector database | Planned |
+| Remediation | Authorized AI Agent tools | Planned |
+| Recovery Verification | Automated metric re-evaluation | Planned |
 
 ## Repository Structure
 
 ```text
 cloudops-agent/
-├── backend/       Spring Boot backend and AWS integration
-└── frontend/      React and TypeScript frontend
+├── backend/           Spring Boot backend, AI integration,
+│                      monitoring, and persistence
+└── frontend/          React and TypeScript frontend
 ```
 
-## Backend Development
+## Local Development
 
 ### Prerequisites
 
-- Java 21
-- PostgreSQL 16-compatible database
-- Existing `cloudops_db` database on `localhost:5433`
-- Maven Wrapper (included in the backend)
-- AWS credentials with appropriate read-only CloudWatch permissions for AWS integration
+- Java 21.
+- PostgreSQL 16-compatible database.
+- Existing `cloudops_db` database on `localhost:5433`.
+- Maven Wrapper.
+- Node.js LTS.
+- Ollama.
+- Qwen3 4B.
+- AWS credentials with appropriate read permissions for CloudWatch.
 
-Set the database password in the environment. Do not commit credentials.
+### Database Configuration
+
+Set the PostgreSQL password:
 
 ```powershell
 $env:DB_PASSWORD = Read-Host 'Database password' -MaskInput
-cd backend
-.\mvnw.cmd spring-boot:run
 ```
 
-The default database username is `cloudops`. Override it using `DB_USERNAME` if needed.
+The default database username is `cloudops`. It can be overridden using `DB_USERNAME`.
 
-Hibernate uses `ddl-auto=validate` and does not automatically create or drop tables.
+Hibernate uses `ddl-auto=validate`, so the existing schema must be available before starting the application.
+
+### Ollama Configuration
+
+Download the model:
+
+```powershell
+ollama pull qwen3:4b
+```
+
+Test it locally:
+
+```powershell
+ollama run qwen3:4b
+```
+
+The backend expects Ollama at:
+
+```text
+http://localhost:11434
+```
+
+The current Spring AI model configuration is:
+
+```properties
+spring.ai.ollama.base-url=http://localhost:11434
+spring.ai.ollama.chat.options.model=qwen3:4b
+spring.ai.ollama.chat.options.temperature=0.2
+```
 
 ### AWS Authentication
 
-The AWS SDK uses the default credential provider chain.
+Configure an AWS CLI profile with the required permissions.
 
-For local development, select an appropriately configured AWS profile:
+Example local development configuration:
 
 ```powershell
 $env:AWS_PROFILE = "fitcloud-dev"
 $env:AWS_REGION = "ap-southeast-2"
 ```
 
-Authenticate using the mechanism configured for the selected profile before starting the backend.
+Authenticate using the configured profile mechanism, then verify:
 
-Do not commit AWS credentials, session tokens, or secrets.
+```powershell
+aws sts get-caller-identity --profile fitcloud-dev
+```
+
+Do not commit credentials, session tokens, or database passwords.
+
+### Start the Backend
+
+From the repository root:
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+Default backend address:
+
+```text
+http://localhost:8080
+```
+
+### Test CloudWatch Connectivity
+
+```powershell
+Invoke-RestMethod `
+    -Uri "http://localhost:8080/api/cloudwatch/metrics?functionName=SaveWorkout&metricName=Errors" `
+    -Method GET
+```
+
+### Test the AI Investigation Foundation
+
+```powershell
+$body = @{
+    message = "Use the get_lambda_metrics tool to check the Errors metric of the SaveWorkout Lambda function. Report the actual result."
+} | ConvertTo-Json
+
+$result = Invoke-RestMethod `
+    -Uri "http://localhost:8080/api/agent/investigate" `
+    -Method POST `
+    -ContentType "application/json" `
+    -Body $body
+
+$result.response
+```
+
+This endpoint is currently intended for manual validation and development. Automated investigation triggering will be introduced through the anomaly detection pipeline.
 
 ### Backend Tests
 
@@ -160,11 +468,9 @@ cd backend
 .\mvnw.cmd test
 ```
 
-The context test disables database/JPA auto-configuration, replaces the Incident repository with a mock, and disables scheduling. Tests are designed not to connect to the local PostgreSQL development database.
+Existing tests are designed to avoid connecting to or modifying the development PostgreSQL database.
 
-## Frontend Development
-
-Prerequisite: a current Node.js LTS release.
+### Frontend Development
 
 ```powershell
 cd frontend
@@ -172,43 +478,76 @@ npm ci
 npm run dev
 ```
 
-Vite proxies `/api` requests to `http://localhost:8080` during development.
+The Vite development environment proxies `/api` requests to `http://localhost:8080`.
 
-Validation commands:
+Validation:
 
 ```powershell
 npm run build
 npm run lint
 ```
 
-## Database Changes
+## Database Evolution
 
-The current database is treated as existing state and validated on startup.
+The existing database schema is validated at startup.
 
-A versioned migration baseline should be introduced before evolving the Incident model or adding new persistent schemas.
+A versioned migration baseline should be introduced before adding persistent monitoring events, anomaly records, AI investigation results, remediation executions, or audit trails.
 
-Existing `incidents`, `alerts`, and `system_metrics` tables must not be dropped without an explicit data-retention decision.
+Existing `incidents`, `alerts`, and `system_metrics` tables should not be dropped without an explicit data-retention decision.
 
 ## Development Roadmap
 
-- [x] Establish Spring Boot backend and PostgreSQL integration.
-- [x] Implement basic incident management.
-- [x] Establish React and TypeScript frontend.
-- [x] Connect to AWS CloudWatch and retrieve real Lambda metrics.
-- [ ] Implement the first end-to-end incident detection and AI diagnosis workflow.
+### Phase 1 — Core Infrastructure
+
+- [x] Spring Boot REST API.
+- [x] PostgreSQL integration.
+- [x] Basic incident management.
+- [x] React and TypeScript frontend foundation.
+- [x] AWS CloudWatch metric retrieval.
+- [x] Spring AI and local Qwen3 integration.
+- [x] Natural-language investigation endpoint.
+- [x] Register CloudWatch metric retrieval tool.
+- [ ] Verify end-to-end model-triggered tool execution.
+
+### Phase 2 — Autonomous Monitoring and Detection
+
+- [ ] Implement scheduled CloudWatch monitoring.
+- [ ] Configure monitored services and metric windows.
+- [ ] Implement initial rule-based anomaly evaluation.
 - [ ] Introduce machine learning-based anomaly detection.
-- [ ] Integrate CloudWatch Logs into the diagnostic workflow.
-- [ ] Implement RAG with a vector database.
-- [ ] Implement AI Agent tool calling and controlled remediation.
-- [ ] Add post-remediation verification and audit trails.
-- [ ] Build an operations dashboard for monitoring AI-driven incident response.
+- [ ] Persist anomaly events and prevent duplicate investigations.
+
+### Phase 3 — Autonomous AI Diagnosis
+
+- [ ] Automatically trigger AI investigations from anomaly events.
+- [ ] Integrate CloudWatch Logs.
+- [ ] Correlate metrics and logs.
+- [ ] Implement RAG using embeddings and a vector database.
+- [ ] Generate structured root-cause investigation results.
+
+### Phase 4 — Safe Remediation
+
+- [ ] Implement predefined remediation tools.
+- [ ] Add policy-based authorization and approval controls.
+- [ ] Test simulated remediation.
+- [ ] Enable approved actions in controlled environments.
+- [ ] Record remediation decisions and execution results.
+
+### Phase 5 — Verification and Dashboard
+
+- [ ] Implement automatic post-remediation verification.
+- [ ] Add incident audit trails.
+- [ ] Build an operations dashboard.
+- [ ] Demonstrate the complete autonomous workflow.
 
 ## Project Status
 
-**Active development — AI operations prototype.**
+**Active Development — Autonomous Cloud Operations System**
 
-CloudOps Agent currently provides a working backend foundation and real AWS CloudWatch metric retrieval.
+The current implementation establishes the technical foundation for autonomous operations through Spring Boot, PostgreSQL, AWS CloudWatch, Spring AI, and a locally hosted Qwen3 language model.
 
-Its autonomous anomaly detection, AI diagnosis, RAG, and remediation capabilities are under development.
+The next priority is to implement scheduled monitoring and anomaly detection, allowing CloudOps Agent to proactively identify operational problems without requiring manual user requests.
 
-The next priority is to implement an end-to-end AI-driven incident investigation workflow, rather than expanding the project into a standalone monitoring dashboard.
+Subsequent development will connect anomaly events to AI Agent investigations, RAG-based knowledge retrieval, controlled remediation, and recovery verification.
+
+**The project's defining objective is not to answer monitoring questions, but to automatically detect operational failures, investigate their causes, safely respond, and verify recovery.**
