@@ -18,6 +18,8 @@ public class MonitoringScheduler {
     private final MonitoringProperties properties;
     private final MetricCollectionService collectionService;
 
+    private static final int MAX_WINDOWS_PER_CYCLE = 12;
+
     public MonitoringScheduler(
             MonitoringProperties properties,
             MetricCollectionService collectionService
@@ -31,13 +33,13 @@ public class MonitoringScheduler {
             fixedDelayString = "${cloudops.monitoring.interval-ms:60000}"
     )
     public void runCycle() {
-        MetricWindow window = MetricWindow.latestCompleted(Instant.now());
-        log.info("Monitoring cycle started, window={} ~ {}, functions={}",
-                window.start(), window.end(), properties.functions());
+        MetricWindow latest = MetricWindow.latestCompleted(Instant.now());
+        log.info("Monitoring cycle started, latest window={} ~ {}, functions={}",
+                latest.start(), latest.end(), properties.functions());
 
         for (String functionName : properties.functions()) {
             try {
-                collectionService.collect(functionName, window);
+                collectionService.collectPending(functionName, latest, MAX_WINDOWS_PER_CYCLE);
             } catch (Exception e) {
                 log.error("{}: collection failed, will retry next cycle - {}",
                         functionName, e.getMessage());
