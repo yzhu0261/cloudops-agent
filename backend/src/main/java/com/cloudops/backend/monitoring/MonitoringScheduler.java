@@ -1,6 +1,5 @@
 package com.cloudops.backend.monitoring;
 
-import com.cloudops.backend.service.CloudWatchMetricService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,14 +16,14 @@ public class MonitoringScheduler {
             LoggerFactory.getLogger(MonitoringScheduler.class);
 
     private final MonitoringProperties properties;
-    private final CloudWatchMetricService metricService;
+    private final MetricCollectionService collectionService;
 
     public MonitoringScheduler(
             MonitoringProperties properties,
-            CloudWatchMetricService metricService
+            MetricCollectionService collectionService
     ) {
         this.properties = properties;
-        this.metricService = metricService;
+        this.collectionService = collectionService;
     }
 
     @Scheduled(
@@ -38,15 +37,10 @@ public class MonitoringScheduler {
 
         for (String functionName : properties.functions()) {
             try {
-                LambdaWindowMetrics m = metricService.fetchWindow(functionName, window);
-                if (m.hasNoData()) {
-                    log.info("{}: NO_DATA in this window", functionName);
-                } else {
-                    log.info("{}: invocations={}, errors={}, avgDurationMs={}",
-                            functionName, m.invocations(), m.errors(), m.avgDurationMs());
-                }
+                collectionService.collect(functionName, window);
             } catch (Exception e) {
-                log.error("{}: AWS_ERROR - {}", functionName, e.getMessage());
+                log.error("{}: collection failed, will retry next cycle - {}",
+                        functionName, e.getMessage());
             }
         }
     }
