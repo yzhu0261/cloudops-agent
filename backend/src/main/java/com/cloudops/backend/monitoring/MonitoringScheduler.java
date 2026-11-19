@@ -20,6 +20,8 @@ public class MonitoringScheduler {
 
     private static final int MAX_WINDOWS_PER_CYCLE = 12;
 
+    private static final int LOOKBACK_WINDOWS = 864;
+
     public MonitoringScheduler(
             MonitoringProperties properties,
             MetricCollectionService collectionService
@@ -39,7 +41,8 @@ public class MonitoringScheduler {
 
         for (String functionName : properties.functions()) {
             try {
-                collectionService.collectPending(functionName, latest, MAX_WINDOWS_PER_CYCLE);
+                collectionService.collectMissing(
+                        functionName, latest, LOOKBACK_WINDOWS, MAX_WINDOWS_PER_CYCLE);
             } catch (Exception e) {
                 log.error("{}: collection failed, will retry next cycle - {}",
                         functionName, e.getMessage());

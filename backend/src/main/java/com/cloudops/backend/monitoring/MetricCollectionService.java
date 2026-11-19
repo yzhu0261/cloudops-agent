@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MetricCollectionService {
@@ -61,6 +63,29 @@ public class MetricCollectionService {
                 MetricWindow.pendingWindows(lastStoredStart, latest, maxWindows);
 
         for (MetricWindow window : pending) {
+            collect(functionName, window);
+        }
+    }
+
+    public void collectMissing(
+            String functionName,
+            MetricWindow latest,
+            int lookbackWindows,
+            int maxWindows
+    ) {
+        Instant earliest = latest.start()
+                .minusSeconds((long) (lookbackWindows - 1) * MetricWindow.PERIOD_SECONDS);
+
+        Set<Instant> existing = repository
+                .findByFunctionNameAndWindowStartGreaterThanEqual(functionName, earliest)
+                .stream()
+                .map(LambdaMetricSampleEntity::getWindowStart)
+                .collect(Collectors.toSet());
+
+        List<MetricWindow> missing =
+                MetricWindow.missingWindows(latest, lookbackWindows, existing, maxWindows);
+
+        for (MetricWindow window : missing) {
             collect(functionName, window);
         }
     }
