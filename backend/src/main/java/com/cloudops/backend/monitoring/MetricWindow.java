@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public record MetricWindow(Instant start, Instant end) {
 
@@ -32,6 +33,26 @@ public record MetricWindow(Instant start, Instant end) {
         Instant start = lastStoredStart.plusSeconds(PERIOD_SECONDS);
         while (!start.isAfter(latest.start()) && result.size() < maxWindows) {
             result.add(new MetricWindow(start, start.plusSeconds(PERIOD_SECONDS)));
+            start = start.plusSeconds(PERIOD_SECONDS);
+        }
+        return result;
+    }
+
+    public static List<MetricWindow> missingWindows(
+            MetricWindow latest,
+            int lookbackWindows,
+            Set<Instant> existingStarts,
+            int maxWindows
+    ) {
+        List<MetricWindow> result = new ArrayList<>();
+
+        Instant start = latest.start()
+                .minusSeconds((long) (lookbackWindows - 1) * PERIOD_SECONDS);
+
+        while (!start.isAfter(latest.start()) && result.size() < maxWindows) {
+            if (!existingStarts.contains(start)) {
+                result.add(new MetricWindow(start, start.plusSeconds(PERIOD_SECONDS)));
+            }
             start = start.plusSeconds(PERIOD_SECONDS);
         }
         return result;
