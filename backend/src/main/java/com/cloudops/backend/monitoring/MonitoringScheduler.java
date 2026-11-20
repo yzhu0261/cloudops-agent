@@ -1,5 +1,6 @@
 package com.cloudops.backend.monitoring;
 
+import com.cloudops.backend.detection.DetectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,19 +16,21 @@ public class MonitoringScheduler {
     private static final Logger log =
             LoggerFactory.getLogger(MonitoringScheduler.class);
 
+    private static final int MAX_WINDOWS_PER_CYCLE = 12;
+    private static final int LOOKBACK_WINDOWS = 864;
+
     private final MonitoringProperties properties;
     private final MetricCollectionService collectionService;
-
-    private static final int MAX_WINDOWS_PER_CYCLE = 12;
-
-    private static final int LOOKBACK_WINDOWS = 864;
+    private final DetectionService detectionService;
 
     public MonitoringScheduler(
             MonitoringProperties properties,
-            MetricCollectionService collectionService
+            MetricCollectionService collectionService,
+            DetectionService detectionService
     ) {
         this.properties = properties;
         this.collectionService = collectionService;
+        this.detectionService = detectionService;
     }
 
     @Scheduled(
@@ -43,8 +46,9 @@ public class MonitoringScheduler {
             try {
                 collectionService.collectMissing(
                         functionName, latest, LOOKBACK_WINDOWS, MAX_WINDOWS_PER_CYCLE);
+                detectionService.evaluate(functionName, latest);
             } catch (Exception e) {
-                log.error("{}: collection failed, will retry next cycle - {}",
+                log.error("{}: monitoring cycle failed, will retry next cycle - {}",
                         functionName, e.getMessage());
             }
         }
