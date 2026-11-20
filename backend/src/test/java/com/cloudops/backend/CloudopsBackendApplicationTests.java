@@ -1,6 +1,7 @@
 package com.cloudops.backend;
 
 import com.cloudops.backend.repository.IncidentRepository;
+import com.cloudops.backend.repository.LambdaMetricSampleRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -12,6 +13,9 @@ class CloudopsBackendApplicationTests {
 
 	@MockitoBean
 	private IncidentRepository incidentRepository;
+
+	@MockitoBean
+	private LambdaMetricSampleRepository lambdaMetricSampleRepository;
 
 	@Test
 	void contextLoads() {
