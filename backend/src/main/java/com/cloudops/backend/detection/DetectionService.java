@@ -68,11 +68,10 @@ public class DetectionService {
             return;
         }
 
-        lastEvaluated.put(functionName, window.start());
-
         if (currentRate == null) {
             log.info("{}: window {} has no invocations, nothing to evaluate",
                     functionName, window.start());
+            lastEvaluated.put(functionName, window.start());
             return;
         }
 
@@ -86,6 +85,8 @@ public class DetectionService {
             log.info("{}: error-rate {} in window {} ({})",
                     functionName, result.status(), window.start(), result.reason());
         }
+        lastEvaluated.put(functionName, window.start());
+
     }
 
     private void recordAnomaly(
