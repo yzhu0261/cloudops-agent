@@ -41,52 +41,6 @@ class MetricWindowTest {
     }
 
     @Test
-    void noHistoryReturnsOnlyLatestWindow() {
-        MetricWindow latest = w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z");
-
-        List<MetricWindow> result = MetricWindow.pendingWindows(null, latest, 12);
-
-        assertEquals(List.of(latest), result);
-    }
-
-    @Test
-    void upToDateReturnsNothing() {
-        MetricWindow latest = w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z");
-
-        List<MetricWindow> result = MetricWindow.pendingWindows(
-                Instant.parse("2026-11-19T12:55:00Z"), latest, 12);
-
-        assertEquals(List.of(), result);
-    }
-
-    @Test
-    void fillsGapOldestFirst() {
-        MetricWindow latest = w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z");
-
-        List<MetricWindow> result = MetricWindow.pendingWindows(
-                Instant.parse("2026-11-19T12:40:00Z"), latest, 12);
-
-        assertEquals(List.of(
-                w("2026-11-19T12:45:00Z", "2026-11-19T12:50:00Z"),
-                w("2026-11-19T12:50:00Z", "2026-11-19T12:55:00Z"),
-                w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z")
-        ), result);
-    }
-
-    @Test
-    void capsNumberOfWindowsPerCycle() {
-        MetricWindow latest = w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z");
-
-        List<MetricWindow> result = MetricWindow.pendingWindows(
-                Instant.parse("2026-11-19T12:25:00Z"), latest, 2);
-
-        assertEquals(List.of(
-                w("2026-11-19T12:30:00Z", "2026-11-19T12:35:00Z"),
-                w("2026-11-19T12:35:00Z", "2026-11-19T12:40:00Z")
-        ), result);
-    }
-
-    @Test
     void missingWindowsWithNothingStoredReturnsAllOldestFirst() {
         MetricWindow latest = w("2026-11-19T12:55:00Z", "2026-11-19T13:00:00Z");
 

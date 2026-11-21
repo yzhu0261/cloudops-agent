@@ -1,4 +1,5 @@
 package com.cloudops.backend.enums;
 
-public class AnomalyMetric {
+public enum AnomalyMetric {
+    ERROR_RATE
 }

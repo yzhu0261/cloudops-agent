@@ -53,20 +53,6 @@ public class MetricCollectionService {
                 m.invocations(), m.errors(), m.avgDurationMs());
     }
 
-    public void collectPending(String functionName, MetricWindow latest, int maxWindows) {
-        Instant lastStoredStart = repository
-                .findTopByFunctionNameOrderByWindowStartDesc(functionName)
-                .map(LambdaMetricSampleEntity::getWindowStart)
-                .orElse(null);
-
-        List<MetricWindow> pending =
-                MetricWindow.pendingWindows(lastStoredStart, latest, maxWindows);
-
-        for (MetricWindow window : pending) {
-            collect(functionName, window);
-        }
-    }
-
     public void collectMissing(
             String functionName,
             MetricWindow latest,

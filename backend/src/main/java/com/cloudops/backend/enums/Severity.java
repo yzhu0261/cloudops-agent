@@ -1,4 +1,6 @@
 package com.cloudops.backend.enums;
 
-public class Severity {
+public enum Severity {
+    WARNING,
+    CRITICAL
 }
