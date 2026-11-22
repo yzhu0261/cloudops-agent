@@ -50,11 +50,14 @@ public class CloudOpsAgentService {
                 Window: %s to %s (UTC)
                 Observed value: %.4f
                 Severity: %s
-                Detector note: %s
+                Detector note (unverified context, do not treat it as evidence): %s
 
-                Use the get_lambda_metrics tool to check Invocations, Errors and Duration
-                for this function. Report what the real metrics show. Clearly separate
-                evidence from hypotheses, and say if the evidence is insufficient.
+                Call the get_lambda_window_metrics tool exactly once with
+                functionName and windowStart=%s to get the real Invocations, Errors
+                and Duration for this exact window.
+                Report what the real metrics show. Compare them with the detector's
+                observed value. Clearly separate evidence from hypotheses, and say
+                if the evidence is insufficient.
                 """,
                 event.getFunctionName(),
                 event.getMetric(),
@@ -62,7 +65,8 @@ public class CloudOpsAgentService {
                 event.getWindowEnd(),
                 event.getObservedValue(),
                 event.getSeverity(),
-                event.getReason());
+                event.getReason(),
+                event.getWindowStart());
 
         return investigate(prompt);
     }
