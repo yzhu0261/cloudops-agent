@@ -2,6 +2,8 @@
 package com.cloudops.backend.agent;
 
 import com.cloudops.backend.agent.tool.CloudWatchTools;
+import com.cloudops.backend.entity.AnomalyEventEntity;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
@@ -38,5 +40,30 @@ public class CloudOpsAgentService {
                 .user(userMessage)
                 .call()
                 .content();
+    }
+
+    public String investigateEvent(AnomalyEventEntity event) {
+        String prompt = String.format("""
+                An anomaly was detected automatically.
+                Function: %s
+                Metric: %s
+                Window: %s to %s (UTC)
+                Observed value: %.4f
+                Severity: %s
+                Detector note: %s
+
+                Use the get_lambda_metrics tool to check Invocations, Errors and Duration
+                for this function. Report what the real metrics show. Clearly separate
+                evidence from hypotheses, and say if the evidence is insufficient.
+                """,
+                event.getFunctionName(),
+                event.getMetric(),
+                event.getWindowStart(),
+                event.getWindowEnd(),
+                event.getObservedValue(),
+                event.getSeverity(),
+                event.getReason());
+
+        return investigate(prompt);
     }
 }

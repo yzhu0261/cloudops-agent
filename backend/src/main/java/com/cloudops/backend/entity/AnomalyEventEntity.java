@@ -2,6 +2,8 @@ package com.cloudops.backend.entity;
 
 import com.cloudops.backend.enums.AnomalyMetric;
 import com.cloudops.backend.enums.Severity;
+import com.cloudops.backend.enums.InvestigationStatus;
+
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -49,6 +51,10 @@ public class AnomalyEventEntity {
     @Column(name = "detected_at", nullable = false)
     private Instant detectedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "investigation_status", nullable = false)
+    private InvestigationStatus investigationStatus;
+
     protected AnomalyEventEntity() {
     }
 
@@ -76,6 +82,7 @@ public class AnomalyEventEntity {
         this.severity = severity;
         this.reason = reason;
         this.detectedAt = Instant.now();
+        this.investigationStatus = InvestigationStatus.PENDING;
     }
 
     public UUID getId() { return id; }
@@ -90,4 +97,6 @@ public class AnomalyEventEntity {
     public Severity getSeverity() { return severity; }
     public String getReason() { return reason; }
     public Instant getDetectedAt() { return detectedAt; }
+    public InvestigationStatus getInvestigationStatus() { return investigationStatus; }
+    public void setInvestigationStatus(InvestigationStatus status) { this.investigationStatus = status; }
 }

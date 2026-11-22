@@ -6,9 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.List;
+import com.cloudops.backend.enums.InvestigationStatus;
+
 
 public interface AnomalyEventRepository extends JpaRepository<AnomalyEventEntity, UUID> {
 
     boolean existsByFunctionNameAndMetricAndWindowStart(
             String functionName, AnomalyMetric metric, Instant windowStart);
+
+    List<AnomalyEventEntity> findByInvestigationStatusOrderByDetectedAtAsc(InvestigationStatus status);
 }

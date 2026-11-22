@@ -1,4 +1,8 @@
 package com.cloudops.backend.enums;
 
-public class InvestigationStatus {
+public enum InvestigationStatus {
+    PENDING,
+    IN_PROGRESS,
+    COMPLETED,
+    FAILED
 }
