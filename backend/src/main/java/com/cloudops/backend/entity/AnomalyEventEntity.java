@@ -55,6 +55,15 @@ public class AnomalyEventEntity {
     @Column(name = "investigation_status", nullable = false)
     private InvestigationStatus investigationStatus;
 
+    @Column(name = "investigation_report", columnDefinition = "TEXT")
+    private String investigationReport;
+
+    @Column(name = "investigation_error", columnDefinition = "TEXT")
+    private String investigationError;
+
+    @Column(name = "investigation_finished_at")
+    private Instant investigationFinishedAt;
+
     protected AnomalyEventEntity() {
     }
 
@@ -98,5 +107,21 @@ public class AnomalyEventEntity {
     public String getReason() { return reason; }
     public Instant getDetectedAt() { return detectedAt; }
     public InvestigationStatus getInvestigationStatus() { return investigationStatus; }
-    public void setInvestigationStatus(InvestigationStatus status) { this.investigationStatus = status; }
+    public String getInvestigationReport() { return investigationReport; }
+    public String getInvestigationError() { return investigationError; }
+    public Instant getInvestigationFinishedAt() { return investigationFinishedAt; }
+    public void setInvestigationStatus(InvestigationStatus status) { this.investigationStatus = status; };
+
+    public void markCompleted(String report) {
+        this.investigationStatus = InvestigationStatus.COMPLETED;
+        this.investigationReport = report;
+        this.investigationError = null;
+        this.investigationFinishedAt = Instant.now();
+    }
+
+    public void markFailed(String error) {
+        this.investigationStatus = InvestigationStatus.FAILED;
+        this.investigationError = error;
+        this.investigationFinishedAt = Instant.now();
+    }
 }

@@ -25,6 +25,9 @@ CREATE TABLE anomaly_events (
                                 severity        VARCHAR(16)  NOT NULL,
                                 reason          TEXT         NOT NULL,
                                 investigation_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                                investigation_report TEXT,
+                                investigation_error TEXT,
+                                investigation_finished_at TIMESTAMPTZ,
                                 detected_at     TIMESTAMPTZ  NOT NULL,
                                 CONSTRAINT uq_anomaly_window UNIQUE (function_name, metric, window_start)
 );

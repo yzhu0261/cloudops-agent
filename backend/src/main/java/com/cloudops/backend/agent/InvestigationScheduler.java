@@ -49,11 +49,11 @@ public class InvestigationScheduler {
 
         try {
             String report = agentService.investigateEvent(event);
-            event.setInvestigationStatus(InvestigationStatus.COMPLETED);
+            event.markCompleted(report);
             eventRepository.save(event);
             log.info("Investigation completed for event {}:\n{}", event.getId(), report);
         } catch (Exception e) {
-            event.setInvestigationStatus(InvestigationStatus.FAILED);
+            event.markFailed(e.toString());
             eventRepository.save(event);
             log.error("Investigation failed for event {}: {}", event.getId(), e.getMessage());
         }
