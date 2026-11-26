@@ -122,6 +122,7 @@ public class AnomalyEventEntity {
     public void markFailed(String error) {
         this.investigationStatus = InvestigationStatus.FAILED;
         this.investigationError = error;
+        this.investigationReport = null;
         this.investigationFinishedAt = Instant.now();
     }
 }
